@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -21,9 +22,15 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.location.Poi;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.InfoWindow;
+import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.Marker;
+import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationConfiguration.LocationMode;
 import com.baidu.mapapi.map.MyLocationData;
@@ -42,6 +49,15 @@ public class MapActivity extends Activity {
     public MyLocationListenner myListener = new MyLocationListenner();
     private LocationMode mCurrentMode;
 
+    /**
+     * 当前地点击点
+     */
+    private LatLng currentPt;
+
+    // 初始化全局 bitmap 信息，不用时及时 recycle
+    BitmapDescriptor bdGround = BitmapDescriptorFactory
+            .fromResource(R.drawable.icon_gcoding);
+
     MapView mMapView;
     BaiduMap mBaiduMap;
 
@@ -51,6 +67,8 @@ public class MapActivity extends Activity {
 
     private SDKReceiver mReceiver;
     public TextView mLocalInfo;
+    public double mLongitude;
+    public double mLatitude;
 
     /**
      * 构造广播监听类，监听 SDK key 验证以及网络异常广播
@@ -87,6 +105,46 @@ public class MapActivity extends Activity {
         mLocalInfo = (TextView) findViewById(R.id.localInfo);
         mCurrentMode = LocationMode.NORMAL;
         requestLocButton.setText("普通");
+
+
+
+        // 地图初始化
+        mMapView = (MapView) findViewById(R.id.bmapView);
+        mBaiduMap = mMapView.getMap();
+
+        initListener();
+
+        // 定位初始化
+        mLocClient = new LocationClient(this);
+        mLocClient.registerLocationListener(myListener);
+        LocationClientOption option = new LocationClientOption();
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
+        option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
+        int span= 5000;
+        option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
+        option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
+        option.setOpenGps(true);//可选，默认false,设置是否使用gps
+        option.setLocationNotify(true);//可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
+        option.setIsNeedLocationDescribe(true);//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
+        option.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
+        option.setIgnoreKillProcess(false);//可选，默认false，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认杀死
+        option.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
+        option.setEnableSimulateGps(false);//可选，默认false，设置是否需要过滤gps仿真结果，默认需要
+        mLocClient.setLocOption(option);
+        // 开启定位图层
+        mBaiduMap.setMyLocationEnabled(true);
+        mBaiduMap.setMyLocationConfigeration(new MyLocationConfiguration(mCurrentMode, true,
+                null));//默认图标
+        mLocClient.start();
+
+
+    }
+
+    /**
+     * 对地图事件的消息响应
+     */
+    private void initListener() {
+        //按钮点击事件
         OnClickListener btnClickListener = new OnClickListener() {
             public void onClick(View v) {
                 switch (mCurrentMode) {
@@ -116,37 +174,137 @@ public class MapActivity extends Activity {
                 }
             }
         };
-
-
         requestLocButton.setOnClickListener(btnClickListener);
 
-        // 地图初始化
-        mMapView = (MapView) findViewById(R.id.bmapView);
-        mBaiduMap = mMapView.getMap();
 
 
-        // 定位初始化
-        mLocClient = new LocationClient(this);
-        mLocClient.registerLocationListener(myListener);
-        LocationClientOption option = new LocationClientOption();
-        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
-        option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
-        int span= 5000;
-        option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
-        option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
-        option.setOpenGps(true);//可选，默认false,设置是否使用gps
-        option.setLocationNotify(true);//可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
-        option.setIsNeedLocationDescribe(true);//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
-        option.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
-        option.setIgnoreKillProcess(false);//可选，默认false，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认杀死
-        option.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
-        option.setEnableSimulateGps(false);//可选，默认false，设置是否需要过滤gps仿真结果，默认需要
-        mLocClient.setLocOption(option);
-        // 开启定位图层
-        mBaiduMap.setMyLocationEnabled(true);
-        mBaiduMap.setMyLocationConfigeration(new MyLocationConfiguration(mCurrentMode, true,
-                null));//默认图标
-        mLocClient.start();
+        mBaiduMap.setOnMapTouchListener(new BaiduMap.OnMapTouchListener() {
+
+            @Override
+            public void onTouch(MotionEvent event) {
+
+            }
+        });
+
+
+        mBaiduMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
+            /**
+             * 单击地图
+             */
+            public void onMapClick(LatLng point) {
+                currentPt = point;
+                updateMapState();
+            }
+
+            /**
+             * 单击地图中的POI点
+             */
+            public boolean onMapPoiClick(MapPoi poi) {
+                currentPt = poi.getPosition();
+                updateMapState();
+                return false;
+            }
+        });
+        mBaiduMap.setOnMapLongClickListener(new BaiduMap.OnMapLongClickListener() {
+            /**
+             * 长按地图
+             */
+            public void onMapLongClick(LatLng point) {
+                currentPt = point;
+                updateMapState();
+                //添加覆盖物
+                MarkerOptions ooGround = new MarkerOptions().position(currentPt).icon(bdGround)
+                        .draggable(true);
+                mBaiduMap.addOverlay(ooGround);
+            }
+        });
+        mBaiduMap.setOnMapDoubleClickListener(new BaiduMap.OnMapDoubleClickListener() {
+            /**
+             * 双击地图
+             */
+            public void onMapDoubleClick(LatLng point) {
+                currentPt = point;
+                updateMapState();
+            }
+        });
+
+        /**
+         * 地图状态发生变化
+         */
+        mBaiduMap.setOnMapStatusChangeListener(new BaiduMap.OnMapStatusChangeListener() {
+            public void onMapStatusChangeStart(MapStatus status) {
+                updateMapState();
+            }
+
+            public void onMapStatusChangeFinish(MapStatus status) {
+                updateMapState();
+            }
+
+            public void onMapStatusChange(MapStatus status) {
+                updateMapState();
+            }
+        });
+
+        //覆盖物点击事件
+        mBaiduMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(final Marker marker) {
+                //覆盖物添加删除button
+                Button button = new Button(getApplicationContext());
+                button.setBackgroundResource(R.drawable.popup);
+                button.setText("删除");
+                button.setOnClickListener(new OnClickListener() {
+                    public void onClick(View v) {
+                        marker.remove();
+                        mBaiduMap.hideInfoWindow();
+                    }
+                });
+                LatLng ll = marker.getPosition();
+                InfoWindow mInfoWindow = new InfoWindow(button, ll, -47);
+                mBaiduMap.showInfoWindow(mInfoWindow);
+                return false;
+            }
+        });
+
+        //覆盖物拖拽事件
+        mBaiduMap.setOnMarkerDragListener(new BaiduMap.OnMarkerDragListener() {
+            public void onMarkerDrag(Marker marker) {
+            }
+
+            public void onMarkerDragEnd(Marker marker) {
+                Toast.makeText(
+                        MapActivity.this,
+                        "拖拽结束，新位置：" + marker.getPosition().latitude + ", "
+                                + marker.getPosition().longitude,
+                        Toast.LENGTH_LONG).show();
+            }
+
+            public void onMarkerDragStart(Marker marker) {
+            }
+        });
+    }
+
+    /**
+     * 更新地图状态显示面板
+     */
+    private void updateMapState() {
+
+        if (mLocalInfo == null) {
+            return;
+        }
+        String state = "";
+        if (currentPt == null) {
+            state = String.format("当前经度： %f 当前纬度：%f",
+                    mLongitude, mLatitude);
+        } else {
+            state = String.format("经度： %f 纬度：%f",
+                    currentPt.longitude, currentPt.latitude);
+        }
+
+        mLocalInfo.setText(state);
+
+
+
     }
 
     /**
@@ -162,15 +320,16 @@ public class MapActivity extends Activity {
             }
 
             MyLocationData.Builder locData = new MyLocationData.Builder();
+            mLongitude = location.getLongitude();
+            mLatitude = location.getLatitude();
             locData.accuracy(location.getRadius());		// 设置精度
             locData.direction(location.getDirection());	// 设置方向
-            locData.latitude(location.getLatitude());	// 设置纬度
-            locData.longitude(location.getLongitude());	// 设置经度
+            locData.latitude(mLatitude);	// 设置纬度
+            locData.longitude(mLongitude);	// 设置经度
             MyLocationData locationData = locData.build();
             mBaiduMap.setMyLocationData(locationData);	// 把定位数据显示到地图上
 
-            mLocalInfo.setText("经度:"+location.getLongitude()+"  "+"纬度:"+location.getLatitude());
-            logInfo(location);
+//            logInfo(location);
             if (isFirstLoc) {
                 isFirstLoc = false;
                 LatLng ll = new LatLng(location.getLatitude(),
@@ -268,6 +427,9 @@ public class MapActivity extends Activity {
         mBaiduMap.setMyLocationEnabled(false);
         mMapView.onDestroy();
         mMapView = null;
+
+        // 回收 bitmap 资源
+        bdGround.recycle();
         super.onDestroy();
     }
 

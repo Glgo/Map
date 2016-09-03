@@ -21,9 +21,13 @@ import java.util.TimerTask;
 public class MainActivity extends ListActivity {
 
 	private BroadcastReceiver receiver;
+
+
 	
 	private ClassAndName[] datas = {
-			new ClassAndName(MapActivity.class, "定位"),
+			new ClassAndName(MapActivity.class,"定位"),
+			new ClassAndName(GeoActivity.class, "地理编码"),
+			new ClassAndName(BusLineActivity.class, "公交路线"),
 			new ClassAndName(QRActivity.class, "二维码")
 	};
 	@Override
