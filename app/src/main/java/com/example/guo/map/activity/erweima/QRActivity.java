@@ -1,8 +1,8 @@
 package com.example.guo.map.activity.erweima;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -12,7 +12,7 @@ import com.example.guo.map.R;
 /**
  * Created by Guo on 2016/9/3.
  */
-public class QRActivity extends Activity{
+public class QRActivity extends AppCompatActivity {
 
     // 扫描按钮
     private Button cButtonScan;

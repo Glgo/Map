@@ -3,6 +3,7 @@ package com.example.guo.map.activity;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -68,6 +69,12 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
     TransitRouteResult nowResult = null;
     DrivingRouteResult nowResultd  = null;
 
+    //由上个activity传过来的当前位置
+    public double mLatitude;
+    public double mLongitude;
+    public PlanNode mStNode;
+    public PlanNode mEnNode;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,6 +86,11 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
         this.walk = (Button) findViewById(R.id.walk);
         this.transit = (Button) findViewById(R.id.transit);
         this.drive = (Button) findViewById(R.id.drive);
+
+        //取出intent传过来的数据
+        Intent intent = getIntent();
+        mLatitude = intent.getDoubleExtra("myLatitude",38.052364);
+        mLongitude = intent.getDoubleExtra("myLongitude",114.525676);
         //隐藏按钮
         pre.setVisibility(View.INVISIBLE);
         next.setVisibility(View.INVISIBLE);
@@ -92,6 +104,19 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
         mSearch = RoutePlanSearch.newInstance();
         mSearch.setOnGetRoutePlanResultListener(this);
 
+        // 重置浏览节点的路线数据
+        route = null;
+        pre.setVisibility(View.INVISIBLE);
+        next.setVisibility(View.INVISIBLE);
+        mBaiduMap.clear();//清空地图所有的 Overlay 覆盖物以及 InfoWindow
+
+        // 设置起终点信息
+        mStNode = PlanNode.withLocation(new LatLng(mLatitude,mLongitude));
+        mEnNode = PlanNode.withLocation(MapActivity.currentPt);
+        //默认驾车路线
+        mSearch.drivingSearch((new DrivingRoutePlanOption())
+                .from(mStNode).to(mEnNode));
+
     }
 
     /**
@@ -100,29 +125,22 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
      * @param v
      */
     public void searchButtonProcess(View v){
-        // 重置浏览节点的路线数据
-        route = null;
-        pre.setVisibility(View.INVISIBLE);
-        next.setVisibility(View.INVISIBLE);
-        mBaiduMap.clear();//清空地图所有的 Overlay 覆盖物以及 InfoWindow
 
-        // 设置起终点信息
-        PlanNode stNode = PlanNode.withLocation(new LatLng(38.052364,114.525676));
-        PlanNode enNode = PlanNode.withLocation(new LatLng(38.059961,114.507551));
+        mBaiduMap.clear();//清空地图所有的 Overlay 覆盖物以及 InfoWindow
 
         // 实际使用中请对起点终点城市进行正确的设定
         if (v.getId() == R.id.drive) {
             mSearch.drivingSearch((new DrivingRoutePlanOption())
-                    .from(stNode).to(enNode));
+                    .from(mStNode).to(mEnNode));
         } else if (v.getId() == R.id.transit) {
             mSearch.transitSearch((new TransitRoutePlanOption())
-                    .from(stNode).city("北京").to(enNode));
+                    .from(mStNode).city("石家庄").to(mEnNode));
         } else if (v.getId() == R.id.walk) {
             mSearch.walkingSearch((new WalkingRoutePlanOption())
-                    .from(stNode).to(enNode));
+                    .from(mStNode).to(mEnNode));
         } else if (v.getId() == R.id.bike) {
             mSearch.bikingSearch((new BikingRoutePlanOption())
-                    .from(stNode).to(enNode));
+                    .from(mStNode).to(mEnNode));
         }
     }
 
@@ -341,11 +359,11 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
     }
 
     /**
-     * 单击地图
+     * 单击地图隐藏气泡
      */
     @Override
     public void onMapClick(LatLng latLng) {
-
+        mBaiduMap.hideInfoWindow();
     }
 
     /**

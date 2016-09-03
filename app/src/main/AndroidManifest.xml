@@ -42,7 +42,7 @@
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="3LzwG3cYyvXz4YGGCTTfEEr2rkmSKrqC"/>
 
-        <activity android:name=".activity.MainActivity">
+        <activity android:name=".activity.MainActivity" android:label="Maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -57,7 +57,7 @@
         </service>
 
         <activity android:name=".activity.MapActivity"/>
-        <activity android:name=".activity.erweima.QRActivity"/>
+        <activity android:name=".activity.erweima.QRActivity" android:label="二维码"/>
         <activity android:name=".activity.erweima.ScanerActivity"/>
         <activity android:name=".activity.erweima.CreateActivity"/>
         <activity android:name=".activity.GeoActivity">

@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,7 +53,7 @@ public class MapActivity extends Activity {
     /**
      * 当前地点击点
      */
-    private LatLng currentPt;
+    public static LatLng currentPt;
 
     // 初始化全局 bitmap 信息，不用时及时 recycle
     BitmapDescriptor bdGround = BitmapDescriptorFactory
@@ -251,20 +252,42 @@ public class MapActivity extends Activity {
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 //覆盖物添加删除button
-                Button button = new Button(getApplicationContext());
-                button.setBackgroundResource(R.drawable.popup);
-                button.setText("删除");
-                button.setOnClickListener(new OnClickListener() {
-                    public void onClick(View v) {
-
+//                Button button = new Button(getApplicationContext());
+//                button.setBackgroundResource(R.drawable.popup);
+//                button.setText("删除");
+//                button.setOnClickListener(new OnClickListener() {
+//                    public void onClick(View v) {
+//
 //                        marker.remove();
 //                        mBaiduMap.hideInfoWindow();
+//
+//                    }
+//                });
+
+                View view = View.inflate(MapActivity.this,R.layout.pop,null);
+                TextView title = (TextView) view.findViewById(R.id.tv_title);
+                ImageButton roads = (ImageButton) view.findViewById(R.id.ib_roads);
+                //点击删除文字
+                title.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        marker.remove();
+                        mBaiduMap.hideInfoWindow();
+                    }
+                });
+                //点击路线图标
+                roads.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
                         Intent intent = new Intent(MapActivity.this, RoutePlanActivity.class);
+                        intent.putExtra("myLatitude",mLatitude);
+                        intent.putExtra("myLongitude",mLongitude);
                         startActivity(intent);
+                        mBaiduMap.clear();//清空地图所有的 Overlay 覆盖物以及 InfoWindow
                     }
                 });
                 LatLng ll = marker.getPosition();
-                InfoWindow mInfoWindow = new InfoWindow(button, ll, -47);
+                InfoWindow mInfoWindow = new InfoWindow(view, ll, -47);
                 mBaiduMap.showInfoWindow(mInfoWindow);
                 return false;
             }
