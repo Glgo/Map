@@ -40,7 +40,7 @@ import com.example.guo.map.R;
 import java.util.List;
 
 /**
- * 此demo用来展示如何结合定位SDK实现定位，并使用MyLocationOverlay绘制定位位置 同时展示如何使用自定义图标绘制并点击时弹出泡泡
+ * 展示如何结合定位SDK实现定位，并使用MyLocationOverlay绘制定位位置 同时展示如何使用自定义图标绘制并点击时弹出泡泡
  */
 public class MapActivity extends Activity {
 
@@ -67,6 +67,7 @@ public class MapActivity extends Activity {
 
     private SDKReceiver mReceiver;
     public TextView mLocalInfo;
+    //自己所在位置经纬度
     public double mLongitude;
     public double mLatitude;
 
@@ -255,8 +256,11 @@ public class MapActivity extends Activity {
                 button.setText("删除");
                 button.setOnClickListener(new OnClickListener() {
                     public void onClick(View v) {
-                        marker.remove();
-                        mBaiduMap.hideInfoWindow();
+
+//                        marker.remove();
+//                        mBaiduMap.hideInfoWindow();
+                        Intent intent = new Intent(MapActivity.this, RoutePlanActivity.class);
+                        startActivity(intent);
                     }
                 });
                 LatLng ll = marker.getPosition();
@@ -320,6 +324,7 @@ public class MapActivity extends Activity {
             }
 
             MyLocationData.Builder locData = new MyLocationData.Builder();
+            //获取所在位置经纬度
             mLongitude = location.getLongitude();
             mLatitude = location.getLatitude();
             locData.accuracy(location.getRadius());		// 设置精度

@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MarkerOptions;
@@ -21,6 +22,8 @@ import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.example.guo.map.R;
 
+import java.math.BigDecimal;
+
 /**
  * 展示如何进行地理编码搜索（用地址检索坐标）、反地理编码搜索（用坐标检索地址）
  */
@@ -29,6 +32,10 @@ public class GeoActivity extends AppCompatActivity implements OnGetGeoCoderResul
     GeoCoder mSearch = null; // 搜索模块，也可去掉地图模块独立使用
     BaiduMap mBaiduMap = null;
     MapView mMapView = null;
+    public EditText mLat;
+    public EditText mLon;
+    public EditText mEditCity;
+    public EditText mEditGeoCodeKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +51,15 @@ public class GeoActivity extends AppCompatActivity implements OnGetGeoCoderResul
         // 初始化搜索模块，注册事件监听
         mSearch = GeoCoder.newInstance();
         mSearch.setOnGetGeoCodeResultListener(this);
+
+        // 设置地图中心点为石家庄
+        LatLng hmPos = new LatLng(38.041357,114.514513);
+        MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(hmPos);
+        mBaiduMap.setMapStatus(mapStatusUpdate);
+
+        // 设置地图缩放为13
+        mapStatusUpdate = MapStatusUpdateFactory.zoomTo(13);
+        mBaiduMap.setMapStatus(mapStatusUpdate);
     }
 
     /**
@@ -53,24 +69,25 @@ public class GeoActivity extends AppCompatActivity implements OnGetGeoCoderResul
      */
     public void searchButtonProcess(View v) {
         if (v.getId() == R.id.reversegeocode) {
-            EditText lat = (EditText) findViewById(R.id.lat);
-            EditText lon = (EditText) findViewById(R.id.lon);
-            LatLng ptCenter = new LatLng((Float.valueOf(lat.getText()
-                    .toString())), (Float.valueOf(lon.getText().toString())));
+            mLat = (EditText) findViewById(R.id.lat);
+            mLon = (EditText) findViewById(R.id.lon);
+            LatLng ptCenter = new LatLng((Float.valueOf(mLat.getText()
+                    .toString())), (Float.valueOf(mLon.getText().toString())));
             // 反Geo搜索
             mSearch.reverseGeoCode(new ReverseGeoCodeOption()
                     .location(ptCenter));
         } else if (v.getId() == R.id.geocode) {
-            EditText editCity = (EditText) findViewById(R.id.city);
-            EditText editGeoCodeKey = (EditText) findViewById(R.id.geocodekey);
+            mEditCity = (EditText) findViewById(R.id.city);
+            mEditGeoCodeKey = (EditText) findViewById(R.id.geocodekey);
             // Geo搜索
             mSearch.geocode(new GeoCodeOption().city(
-                    editCity.getText().toString()).address(editGeoCodeKey.getText().toString()));
+                    mEditCity.getText().toString()).address(mEditGeoCodeKey.getText().toString()));
         }
     }
 
     /**
      * 地理编码查询结果回调函数
+     *
      * @param result
      */
     @Override
@@ -87,13 +104,23 @@ public class GeoActivity extends AppCompatActivity implements OnGetGeoCoderResul
                         .fromResource(R.drawable.icon_marka)));
         mBaiduMap.setMapStatus(MapStatusUpdateFactory.newLatLng(result
                 .getLocation()));
-        String strInfo = String.format("纬度：%f 经度：%f",
-                result.getLocation().latitude, result.getLocation().longitude);
+        //获取经纬度的字符串形式，小数点后保留6位
+        double latitude = result.getLocation().latitude;
+        double longitude = result.getLocation().longitude;
+        BigDecimal bigDecimal1 = new BigDecimal(latitude);
+        String lat = bigDecimal1.setScale(6, BigDecimal.ROUND_HALF_UP).toString();
+        BigDecimal bigDecimal2 = new BigDecimal(longitude);
+        String lon = bigDecimal2.setScale(6, BigDecimal.ROUND_HALF_UP).toString();
+
+        String strInfo = String.format("纬度：%f 经度：%f", latitude, longitude);
+//        mLat.setText(lat);
+//        mLon.setText(lon);
         Toast.makeText(GeoActivity.this, strInfo, Toast.LENGTH_LONG).show();
     }
 
     /**
      * 反地理编码查询结果回调函数
+     *
      * @param result
      */
     @Override

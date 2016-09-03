@@ -11,6 +11,7 @@ import android.widget.Toast;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapPoi;
+import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.SupportMapFragment;
 import com.baidu.mapapi.model.LatLng;
@@ -63,6 +64,17 @@ public class BusLineActivity extends FragmentActivity implements
         mBaiduMap = ((SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.bmapView)).getBaiduMap();
         mBaiduMap.setOnMapClickListener(this);
+
+        // 设置地图中心点为石家庄
+        LatLng hmPos = new LatLng(38.041357,114.514513);
+        MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(hmPos);
+        mBaiduMap.setMapStatus(mapStatusUpdate);
+
+        // 设置地图缩放为13
+        mapStatusUpdate = MapStatusUpdateFactory.zoomTo(13);
+        mBaiduMap.setMapStatus(mapStatusUpdate);
+
+
         mSearch = PoiSearch.newInstance();
         mSearch.setOnGetPoiSearchResultListener(this);
         mBusLineSearch = BusLineSearch.newInstance();
