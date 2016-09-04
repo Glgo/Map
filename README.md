@@ -11,6 +11,9 @@
 5. 在主页面双击返回键即可退出应用程序。
 
 
+## [点这儿下载](https://github.com/Glgo/Map/raw/master/apk/map.apk) ##
+
+
 ----------
 
 ## 1. 定位功能 ##
