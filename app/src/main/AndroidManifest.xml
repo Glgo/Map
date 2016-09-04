@@ -17,8 +17,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <!-- 访问网络，网络定位需要上网 -->
     <uses-permission android:name="android.permission.INTERNET"/>
-
-
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -28,7 +26,6 @@
 
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.FLASHLIGHT"/>
-
 
     <application
         android:name=".LocationApplication"
@@ -41,7 +38,9 @@
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="3LzwG3cYyvXz4YGGCTTfEEr2rkmSKrqC"/>
 
-        <activity android:name=".activity.MainActivity" android:label="Maps">
+        <activity
+            android:name=".activity.MainActivity"
+            android:label="Map">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -56,7 +55,9 @@
         </service>
 
         <activity android:name=".activity.MapActivity"/>
-        <activity android:name=".activity.erweima.QRActivity" android:label="二维码"/>
+        <activity
+            android:name=".activity.erweima.QRActivity"
+            android:label="二维码"/>
         <activity android:name=".activity.erweima.ScanerActivity"/>
         <activity android:name=".activity.erweima.CreateActivity"/>
         <activity android:name=".activity.GeoActivity">

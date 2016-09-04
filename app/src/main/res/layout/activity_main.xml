@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="15dp"
+    tools:context="com.example.guo.map.activity.MainActivity">
+    <Button
+        android:id="@+id/bt_map"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="定位功能"
+        android:onClick="startAct"/>
+    <Button
+        android:id="@+id/bt_geo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="地理编码"
+        android:onClick="startAct"/>
+    <Button
+        android:id="@+id/bt_busLine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="公交路线"
+        android:onClick="startAct"/>
+    <Button
+        android:id="@+id/bt_QR"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="二维码"
+        android:onClick="startAct"/>
+
+</LinearLayout>
