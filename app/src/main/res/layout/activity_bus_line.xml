@@ -19,6 +19,7 @@
             android:id="@+id/city"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:maxLength="6"
             android:text="石家庄" />
 
         <TextView
@@ -30,6 +31,7 @@
             android:id="@+id/searchkey"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:maxLength="5"
             android:text="1" />
 
         <TextView

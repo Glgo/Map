@@ -19,7 +19,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.example.guo.map.R;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
@@ -53,7 +52,7 @@ public class CreateActivity extends Activity{
         // 输入框设置
         cEditText = new EditText(this);
         cEditText.setHint("请输入需要生成的二维码数据");
-        cEditText.setBackgroundResource(R.drawable.shape);
+//        cEditText.setBackgroundResource(R.drawable.shape);//android4.0版本会出现黑色背景bug，所以取消
         LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT);
         cLinearLayout.addView(cEditText, layoutParams);
