@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class BusLineActivity extends FragmentActivity implements
         OnGetPoiSearchResultListener, OnGetBusLineSearchResultListener,
-        BaiduMap.OnMapClickListener{
+        BaiduMap.OnMapClickListener {
 
     private Button mBtnPre = null; // 上一个节点
     private Button mBtnNext = null; // 下一个节点
@@ -51,6 +51,7 @@ public class BusLineActivity extends FragmentActivity implements
     private BusLineSearch mBusLineSearch = null;
     private BaiduMap mBaiduMap = null;
     BusLineOverlay overlay; // 公交路线绘制对象
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +67,7 @@ public class BusLineActivity extends FragmentActivity implements
         mBaiduMap.setOnMapClickListener(this);
 
         // 设置地图中心点为石家庄
-        LatLng hmPos = new LatLng(38.041357,114.514513);
+        LatLng hmPos = new LatLng(38.041357, 114.514513);
         MapStatusUpdate mapStatusUpdate = MapStatusUpdateFactory.newLatLng(hmPos);
         mBaiduMap.setMapStatus(mapStatusUpdate);
 
