@@ -35,7 +35,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="公交车" />
+            android:text="路公交车" />
 
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
@@ -53,17 +53,17 @@
                 android:onClick="searchButtonProcess"
                 android:text="开始" />
 
-            <Button
-                android:id="@+id/nextline"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dip"
-                android:layout_marginRight="10dip"
-                android:layout_weight="1"
-                android:onClick="searchNextBusline"
-                android:text="下一条" />
+
         </LinearLayout>
     </LinearLayout>
+    <Button
+        android:id="@+id/nextline"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dip"
+        android:layout_marginRight="10dip"
+        android:onClick="searchNextBusline"
+        android:text="下一条" />
 
     <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"

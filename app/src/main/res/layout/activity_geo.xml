@@ -14,11 +14,14 @@
             android:id="@+id/city"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:maxLength="5"
             android:text="石家庄" />
 
         <EditText
+
             android:id="@+id/geocodekey"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="长安公园" />
 
@@ -27,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="searchButtonProcess"
-            android:text="编码搜索" />
+            android:text="编码" />
     </LinearLayout>
 
     <LinearLayout
@@ -43,7 +46,8 @@
             android:text="纬度:"/>
         <EditText
             android:id="@+id/lat"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="38.041357" />
         <TextView
@@ -54,7 +58,8 @@
 
         <EditText
             android:id="@+id/lon"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="114.514513" />
 
@@ -63,7 +68,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="searchButtonProcess"
-            android:text="反编码搜索" />
+            android:text="反编码" />
     </LinearLayout>
 
     <com.baidu.mapapi.map.MapView
