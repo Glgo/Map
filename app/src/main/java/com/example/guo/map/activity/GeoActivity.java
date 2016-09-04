@@ -1,7 +1,7 @@
 package com.example.guo.map.activity;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 /**
  * 展示如何进行地理编码搜索（用地址检索坐标）、反地理编码搜索（用坐标检索地址）
  */
-public class GeoActivity extends AppCompatActivity implements OnGetGeoCoderResultListener {
+public class GeoActivity extends Activity implements OnGetGeoCoderResultListener {
 
     GeoCoder mSearch = null; // 搜索模块，也可去掉地图模块独立使用
     BaiduMap mBaiduMap = null;
@@ -41,8 +41,6 @@ public class GeoActivity extends AppCompatActivity implements OnGetGeoCoderResul
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_geo);
-        CharSequence titleLable = "地理编码功能";
-        setTitle(titleLable);
 
         // 地图初始化
         mMapView = (MapView) findViewById(R.id.bmapView);

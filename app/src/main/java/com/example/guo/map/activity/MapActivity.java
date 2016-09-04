@@ -1,12 +1,16 @@
 package com.example.guo.map.activity;
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,6 +48,8 @@ import java.util.List;
  * 展示如何结合定位SDK实现定位，并使用MyLocationOverlay绘制定位位置 同时展示如何使用自定义图标绘制并点击时弹出泡泡
  */
 public class MapActivity extends Activity {
+
+    public static final int GPSOPEN = 0;
 
     // 定位相关
     LocationClient mLocClient;
@@ -108,7 +114,8 @@ public class MapActivity extends Activity {
         mCurrentMode = LocationMode.NORMAL;
         requestLocButton.setText("普通");
 
-
+        //检查用户权限
+        checkPermission();
 
         // 地图初始化
         mMapView = (MapView) findViewById(R.id.bmapView);
@@ -122,6 +129,7 @@ public class MapActivity extends Activity {
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
         option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
+        option.setOpenGps(true); // 打开gps
         int span= 5000;
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
@@ -140,6 +148,26 @@ public class MapActivity extends Activity {
         mLocClient.start();
 
 
+    }
+
+    private void checkPermission() {
+        // 检查是否已经授权该权限
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!=
+                PackageManager.PERMISSION_GRANTED){
+            // 判断是否需要解释获取权限原因
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // 需要向用户解释
+                // 此处可以弹窗或用其他方式向用户解释需要该权限的原因
+            } else {
+                // 无需解释，直接请求权限
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, GPSOPEN
+                        );
+                // GPSOPEN 是自定义的常量，在回调方法中可以获取到
+            }
+
+        }
     }
 
     /**
