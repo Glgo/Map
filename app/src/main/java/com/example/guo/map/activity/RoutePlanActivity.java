@@ -74,6 +74,7 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
     public double mLongitude;
     public PlanNode mStNode;
     public PlanNode mEnNode;
+    private String mMyCity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +92,7 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
         Intent intent = getIntent();
         mLatitude = intent.getDoubleExtra("myLatitude",38.052364);
         mLongitude = intent.getDoubleExtra("myLongitude",114.525676);
+        mMyCity = intent.getStringExtra("myCity");
         //隐藏按钮
         pre.setVisibility(View.INVISIBLE);
         next.setVisibility(View.INVISIBLE);
@@ -134,7 +136,7 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
                     .from(mStNode).to(mEnNode));
         } else if (v.getId() == R.id.transit) {
             mSearch.transitSearch((new TransitRoutePlanOption())
-                    .from(mStNode).city("石家庄").to(mEnNode));
+                    .from(mStNode).city(mMyCity).to(mEnNode));
         } else if (v.getId() == R.id.walk) {
             mSearch.walkingSearch((new WalkingRoutePlanOption())
                     .from(mStNode).to(mEnNode));

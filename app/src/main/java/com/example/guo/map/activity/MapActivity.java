@@ -2,7 +2,6 @@ package com.example.guo.map.activity;
 
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,11 +9,16 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -40,16 +44,40 @@ import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationConfiguration.LocationMode;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.CityInfo;
+import com.baidu.mapapi.search.core.PoiInfo;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.poi.OnGetPoiSearchResultListener;
+import com.baidu.mapapi.search.poi.PoiCitySearchOption;
+import com.baidu.mapapi.search.poi.PoiDetailResult;
+import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
+import com.baidu.mapapi.search.poi.PoiIndoorResult;
+import com.baidu.mapapi.search.poi.PoiResult;
+import com.baidu.mapapi.search.poi.PoiSearch;
+import com.baidu.mapapi.search.sug.OnGetSuggestionResultListener;
+import com.baidu.mapapi.search.sug.SuggestionResult;
+import com.baidu.mapapi.search.sug.SuggestionSearch;
+import com.baidu.mapapi.search.sug.SuggestionSearchOption;
 import com.example.guo.map.R;
+import com.example.guo.map.overlayutil.PoiOverlay;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 展示如何结合定位SDK实现定位，并使用MyLocationOverlay绘制定位位置 同时展示如何使用自定义图标绘制并点击时弹出泡泡
  */
-public class MapActivity extends Activity {
+public class MapActivity extends FragmentActivity implements
+        OnGetPoiSearchResultListener, OnGetSuggestionResultListener {
 
     public static final int GPSOPEN = 0;
+
+    private PoiSearch mPoiSearch = null;
+    private SuggestionSearch mSuggestionSearch = null;
+
+    private List<String> suggest;
+
+    private ArrayAdapter<String> sugAdapter = null;
 
     // 定位相关
     LocationClient mLocClient;
@@ -73,10 +101,92 @@ public class MapActivity extends Activity {
     boolean isFirstLoc = true; // 是否首次定位
 
     private SDKReceiver mReceiver;
-    public TextView mLocalInfo;
     //自己所在位置经纬度
     public double mLongitude;
     public double mLatitude;
+    private android.widget.AutoCompleteTextView keyWorldsView;
+    private MapView bmapView;
+    private Button search;
+    //当前所在城市
+    public static String mLocationCity;
+
+    /**
+     * 获取POI搜索结果，包括searchInCity，searchNearby，searchInBound返回的搜索结果
+     *
+     * @param result
+     */
+    @Override
+    public void onGetPoiResult(PoiResult result) {
+        if (result == null || result.error == SearchResult.ERRORNO.RESULT_NOT_FOUND) {
+            Toast.makeText(MapActivity.this, "未找到结果", Toast.LENGTH_LONG)
+                    .show();
+            return;
+        }
+        if (result.error == SearchResult.ERRORNO.NO_ERROR) {
+            mBaiduMap.clear();
+            PoiOverlay overlay = new MyPoiOverlay(mBaiduMap);
+            mBaiduMap.setOnMarkerClickListener(overlay);
+            overlay.setData(result);
+            overlay.addToMap();
+            overlay.zoomToSpan();
+
+            return;
+        }
+        if (result.error == SearchResult.ERRORNO.AMBIGUOUS_KEYWORD) {
+
+            // 当输入关键字在本市没有找到，但在其他城市找到时，返回包含该关键字信息的城市列表
+            String strInfo = "在";
+            for (CityInfo cityInfo : result.getSuggestCityList()) {
+                strInfo += cityInfo.city;
+                strInfo += ",";
+            }
+            strInfo += "找到结果";
+            Toast.makeText(MapActivity.this, strInfo, Toast.LENGTH_LONG)
+                    .show();
+        }
+    }
+
+    /**
+     * 获取POI详情搜索结果，得到searchPoiDetail返回的搜索结果
+     *
+     * @param result
+     */
+    @Override
+    public void onGetPoiDetailResult(PoiDetailResult result) {
+        if (result.error != SearchResult.ERRORNO.NO_ERROR) {
+            Toast.makeText(MapActivity.this, "抱歉，未找到结果", Toast.LENGTH_SHORT)
+                    .show();
+        } else {
+            Toast.makeText(MapActivity.this, result.getName() + ": " + result.getAddress(), Toast.LENGTH_SHORT)
+                    .show();
+        }
+    }
+
+    @Override
+    public void onGetPoiIndoorResult(PoiIndoorResult result) {
+
+    }
+
+    /**
+     * 获取在线建议搜索结果，得到requestSuggestion返回的搜索结果
+     *
+     * @param result
+     */
+    @Override
+    public void onGetSuggestionResult(SuggestionResult result) {
+        if (result == null || result.getAllSuggestions() == null) {
+            return;
+        }
+        suggest = new ArrayList<String>();
+        for (SuggestionResult.SuggestionInfo info : result.getAllSuggestions()) {
+            if (info.key != null) {
+                suggest.add(info.key);
+            }
+        }
+        sugAdapter = new ArrayAdapter<String>(MapActivity.this, android.R.layout.simple_dropdown_item_1line, suggest);
+        keyWorldsView.setAdapter(sugAdapter);
+        sugAdapter.notifyDataSetChanged();
+    }
 
     /**
      * 构造广播监听类，监听 SDK key 验证以及网络异常广播
@@ -100,37 +210,73 @@ public class MapActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
-        // 注册 SDK 广播监听者
-        IntentFilter iFilter = new IntentFilter();
-        iFilter.addAction(SDKInitializer.SDK_BROADTCAST_ACTION_STRING_PERMISSION_CHECK_OK);
-        iFilter.addAction(SDKInitializer.SDK_BROADTCAST_ACTION_STRING_PERMISSION_CHECK_ERROR);
-        iFilter.addAction(SDKInitializer.SDK_BROADCAST_ACTION_STRING_NETWORK_ERROR);
-        mReceiver = new SDKReceiver();
-        registerReceiver(mReceiver, iFilter);
-
+        this.search = (Button) findViewById(R.id.button2);
         requestLocButton = (Button) findViewById(R.id.button1);
-        mLocalInfo = (TextView) findViewById(R.id.localInfo);
+        this.bmapView = (MapView) findViewById(R.id.bmapView);
+        this.keyWorldsView = (AutoCompleteTextView) findViewById(R.id.searchkey);
+        // 地图初始化
+        mMapView = (MapView) findViewById(R.id.bmapView);
+        mBaiduMap = mMapView.getMap();
+
+        keyWorldsView = (AutoCompleteTextView) findViewById(R.id.searchkey);
+        sugAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_dropdown_item_1line);
+        keyWorldsView.setAdapter(sugAdapter);
+        keyWorldsView.setThreshold(1);//指定显示提示需要输入的最小字符
+        // 注册 SDK 广播监听者
+        registSDKReceiver();
+
         mCurrentMode = LocationMode.NORMAL;
         requestLocButton.setText("普通");
 
         //检查用户权限
         checkPermission();
 
-        // 地图初始化
-        mMapView = (MapView) findViewById(R.id.bmapView);
-        mBaiduMap = mMapView.getMap();
 
+        // 初始化监听器
         initListener();
 
-        // 定位初始化
+        // 初始化定位信息
+        initLocation();
+        //初始化搜索信息
+        initSearch();
+
+
+    }
+
+    private void initSearch() {
+        // 初始化搜索模块，注册搜索事件监听
+        mPoiSearch = PoiSearch.newInstance();
+        mPoiSearch.setOnGetPoiSearchResultListener(this);
+
+        // 初始化建议搜索模块，注册建议搜索事件监听
+        mSuggestionSearch = SuggestionSearch.newInstance();
+        mSuggestionSearch.setOnGetSuggestionResultListener(this);
+    }
+
+    /**
+     * 注册 SDK 广播监听者
+     */
+    private void registSDKReceiver() {
+        IntentFilter iFilter = new IntentFilter();
+        iFilter.addAction(SDKInitializer.SDK_BROADTCAST_ACTION_STRING_PERMISSION_CHECK_OK);
+        iFilter.addAction(SDKInitializer.SDK_BROADTCAST_ACTION_STRING_PERMISSION_CHECK_ERROR);
+        iFilter.addAction(SDKInitializer.SDK_BROADCAST_ACTION_STRING_NETWORK_ERROR);
+        mReceiver = new SDKReceiver();
+        registerReceiver(mReceiver, iFilter);
+    }
+
+    /**
+     * 初始化定位
+     */
+    private void initLocation() {
         mLocClient = new LocationClient(this);
         mLocClient.registerLocationListener(myListener);
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
         option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
         option.setOpenGps(true); // 打开gps
-        int span= 5000;
+        int span = 5000;
         option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
         option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
         option.setOpenGps(true);//可选，默认false,设置是否使用gps
@@ -146,14 +292,12 @@ public class MapActivity extends Activity {
         mBaiduMap.setMyLocationConfigeration(new MyLocationConfiguration(mCurrentMode, true,
                 null));//默认图标
         mLocClient.start();
-
-
     }
 
     private void checkPermission() {
         // 检查是否已经授权该权限
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!=
-                PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED) {
             // 判断是否需要解释获取权限原因
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -163,7 +307,7 @@ public class MapActivity extends Activity {
                 // 无需解释，直接请求权限
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, GPSOPEN
-                        );
+                );
                 // GPSOPEN 是自定义的常量，在回调方法中可以获取到
             }
 
@@ -174,6 +318,8 @@ public class MapActivity extends Activity {
      * 对地图事件的消息响应
      */
     private void initListener() {
+
+
         //按钮点击事件
         OnClickListener btnClickListener = new OnClickListener() {
             public void onClick(View v) {
@@ -207,7 +353,6 @@ public class MapActivity extends Activity {
         requestLocButton.setOnClickListener(btnClickListener);
 
 
-
         mBaiduMap.setOnMapTouchListener(new BaiduMap.OnMapTouchListener() {
 
             @Override
@@ -223,7 +368,7 @@ public class MapActivity extends Activity {
              */
             public void onMapClick(LatLng point) {
                 currentPt = point;
-                updateMapState();
+
             }
 
             /**
@@ -231,7 +376,7 @@ public class MapActivity extends Activity {
              */
             public boolean onMapPoiClick(MapPoi poi) {
                 currentPt = poi.getPosition();
-                updateMapState();
+
                 return false;
             }
         });
@@ -241,7 +386,6 @@ public class MapActivity extends Activity {
              */
             public void onMapLongClick(LatLng point) {
                 currentPt = point;
-                updateMapState();
                 //添加覆盖物
                 MarkerOptions ooGround = new MarkerOptions().position(currentPt).icon(bdGround)
                         .draggable(true);
@@ -254,7 +398,6 @@ public class MapActivity extends Activity {
              */
             public void onMapDoubleClick(LatLng point) {
                 currentPt = point;
-                updateMapState();
             }
         });
 
@@ -263,15 +406,13 @@ public class MapActivity extends Activity {
          */
         mBaiduMap.setOnMapStatusChangeListener(new BaiduMap.OnMapStatusChangeListener() {
             public void onMapStatusChangeStart(MapStatus status) {
-                updateMapState();
+
             }
 
             public void onMapStatusChangeFinish(MapStatus status) {
-                updateMapState();
             }
 
             public void onMapStatusChange(MapStatus status) {
-                updateMapState();
             }
         });
 
@@ -292,7 +433,7 @@ public class MapActivity extends Activity {
 //                    }
 //                });
 
-                View view = View.inflate(MapActivity.this,R.layout.pop,null);
+                View view = View.inflate(MapActivity.this, R.layout.pop, null);
                 TextView title = (TextView) view.findViewById(R.id.tv_title);
                 ImageButton roads = (ImageButton) view.findViewById(R.id.ib_roads);
                 //点击删除文字
@@ -308,8 +449,10 @@ public class MapActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(MapActivity.this, RoutePlanActivity.class);
-                        intent.putExtra("myLatitude",mLatitude);
-                        intent.putExtra("myLongitude",mLongitude);
+                        intent.putExtra("myLatitude", mLatitude);
+                        intent.putExtra("myLongitude", mLongitude);
+                        intent.putExtra("myCity",mLocationCity);
+                        currentPt = marker.getPosition();
                         startActivity(intent);
                         mBaiduMap.clear();//清空地图所有的 Overlay 覆盖物以及 InfoWindow
                     }
@@ -337,30 +480,53 @@ public class MapActivity extends Activity {
             public void onMarkerDragStart(Marker marker) {
             }
         });
+
+
+        /**
+         * 当输入关键字变化时，动态更新建议列表
+         */
+        keyWorldsView.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void afterTextChanged(Editable arg0) {
+
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence arg0, int arg1,
+                                          int arg2, int arg3) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence cs, int arg1, int arg2,
+                                      int arg3) {
+                if (cs.length() <= 0) {
+                    return;
+                }
+
+                /**
+                 * 使用建议搜索服务获取建议列表，结果在onSuggestionResult()中更新
+                 */
+                mSuggestionSearch
+                        .requestSuggestion((new SuggestionSearchOption())
+                                .keyword(cs.toString()).city(mLocationCity));
+            }
+        });
+
+
     }
 
     /**
-     * 更新地图状态显示面板
+     * 响应城市内搜索按钮点击事件
+     *  @param v
      */
-    private void updateMapState() {
-
-        if (mLocalInfo == null) {
-            return;
-        }
-        String state = "";
-        if (currentPt == null) {
-            state = String.format("当前经度： %f 当前纬度：%f",
-                    mLongitude, mLatitude);
-        } else {
-            state = String.format("经度： %f 纬度：%f",
-                    currentPt.longitude, currentPt.latitude);
-        }
-
-        mLocalInfo.setText(state);
-
-
-
+    public void searchButtonProcess(View v) {
+        String keyStr = keyWorldsView.getText().toString();
+        mPoiSearch.searchInCity((new PoiCitySearchOption()).city(mLocationCity).keyword(keyStr).pageNum(1));
     }
+
+
 
     /**
      * 定位SDK监听函数
@@ -378,12 +544,14 @@ public class MapActivity extends Activity {
             //获取所在位置经纬度
             mLongitude = location.getLongitude();
             mLatitude = location.getLatitude();
-            locData.accuracy(location.getRadius());		// 设置精度
-            locData.direction(location.getDirection());	// 设置方向
-            locData.latitude(mLatitude);	// 设置纬度
-            locData.longitude(mLongitude);	// 设置经度
+            locData.accuracy(location.getRadius());        // 设置精度
+            locData.direction(location.getDirection());    // 设置方向
+            locData.latitude(mLatitude);    // 设置纬度
+            locData.longitude(mLongitude);    // 设置经度
+            //获取当前城市
+            mLocationCity = location.getCity();
             MyLocationData locationData = locData.build();
-            mBaiduMap.setMyLocationData(locationData);	// 把定位数据显示到地图上
+            mBaiduMap.setMyLocationData(locationData);    // 把定位数据显示到地图上
 
 //            logInfo(location);
             if (isFirstLoc) {
@@ -409,7 +577,7 @@ public class MapActivity extends Activity {
             sb.append(location.getLongitude());
             sb.append("\nradius : ");
             sb.append(location.getRadius());
-            if (location.getLocType() == BDLocation.TypeGpsLocation){// GPS定位结果
+            if (location.getLocType() == BDLocation.TypeGpsLocation) {// GPS定位结果
                 sb.append("\nspeed : ");
                 sb.append(location.getSpeed());// 单位：公里每小时
                 sb.append("\nsatellite : ");
@@ -421,15 +589,17 @@ public class MapActivity extends Activity {
                 sb.append("\naddr : ");
                 sb.append(location.getAddrStr());
                 sb.append("\ndescribe : ");
+                sb.append(location.getCity());
                 sb.append("gps定位成功");
 
-            } else if (location.getLocType() == BDLocation.TypeNetWorkLocation){// 网络定位结果
+            } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {// 网络定位结果
                 sb.append("\naddr : ");
                 sb.append(location.getAddrStr());
                 //运营商信息
                 sb.append("\noperationers : ");
                 sb.append(location.getOperators());
                 sb.append("\ndescribe : ");
+                sb.append(location.getCity());
                 sb.append("网络定位成功");
             } else if (location.getLocType() == BDLocation.TypeOffLineLocation) {// 离线定位结果
                 sb.append("\ndescribe : ");
@@ -460,6 +630,24 @@ public class MapActivity extends Activity {
 
     }
 
+    private class MyPoiOverlay extends PoiOverlay {
+
+        public MyPoiOverlay(BaiduMap baiduMap) {
+            super(baiduMap);
+        }
+
+        @Override
+        public boolean onPoiClick(int index) {
+            super.onPoiClick(index);
+            PoiInfo poi = getPoiResult().getAllPoi().get(index);
+            // if (poi.hasCaterDetails) {
+            mPoiSearch.searchPoiDetail((new PoiDetailSearchOption())
+                    .poiUid(poi.uid));
+            // }
+            return true;
+        }
+    }
+
     @Override
     protected void onPause() {
         mMapView.onPause();
@@ -487,6 +675,9 @@ public class MapActivity extends Activity {
         // 回收 bitmap 资源
         bdGround.recycle();
         super.onDestroy();
+
+        mPoiSearch.destroy();
+        mSuggestionSearch.destroy();
     }
 
 
