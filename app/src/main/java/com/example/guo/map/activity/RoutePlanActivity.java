@@ -14,11 +14,18 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapPoi;
+import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MyLocationConfiguration;
+import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.RouteLine;
 import com.baidu.mapapi.search.core.SearchResult;
@@ -66,6 +73,15 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
     // 搜索相关
     RoutePlanSearch mSearch = null;    // 搜索模块，也可去掉地图模块独立使用
 
+    // 定位相关
+    LocationClient mLocClient;
+    public MyLocationListenner myListener = new MyLocationListenner();
+    private MyLocationConfiguration.LocationMode mCurrentMode;
+
+    // UI相关
+    Button requestLocButton;
+    boolean isFirstLoc = true; // 是否首次定位
+
     TransitRouteResult nowResult = null;
     DrivingRouteResult nowResultd  = null;
 
@@ -87,6 +103,7 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
         this.walk = (Button) findViewById(R.id.walk);
         this.transit = (Button) findViewById(R.id.transit);
         this.drive = (Button) findViewById(R.id.drive);
+        requestLocButton = (Button) findViewById(R.id.button1);
 
         //取出intent传过来的数据
         Intent intent = getIntent();
@@ -99,12 +116,11 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
 
         //初始化地图
         mBaiduMap = mapView.getMap();
+        mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
 
-        // 地图点击事件处理
-        mBaiduMap.setOnMapClickListener(this);
-        // 初始化搜索模块，注册事件监听
-        mSearch = RoutePlanSearch.newInstance();
-        mSearch.setOnGetRoutePlanResultListener(this);
+        initLocation();
+
+        initListener();
 
         // 重置浏览节点的路线数据
         route = null;
@@ -119,6 +135,74 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
         mSearch.drivingSearch((new DrivingRoutePlanOption())
                 .from(mStNode).to(mEnNode));
 
+    }
+
+    private void initListener() {
+        // 地图点击事件处理
+        mBaiduMap.setOnMapClickListener(this);
+        // 初始化搜索模块，注册事件监听
+        mSearch = RoutePlanSearch.newInstance();
+        mSearch.setOnGetRoutePlanResultListener(this);
+
+        //按钮点击事件
+        View.OnClickListener btnClickListener = new View.OnClickListener() {
+            public void onClick(View v) {
+                switch (mCurrentMode) {
+                    case NORMAL:
+                        requestLocButton.setText("跟随");
+                        mCurrentMode = MyLocationConfiguration.LocationMode.FOLLOWING;
+                        mBaiduMap
+                                .setMyLocationConfigeration(new MyLocationConfiguration(
+                                        mCurrentMode, true, null));
+                        break;
+                    case COMPASS:
+                        requestLocButton.setText("普通");
+                        mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
+                        mBaiduMap
+                                .setMyLocationConfigeration(new MyLocationConfiguration(
+                                        mCurrentMode, true, null));
+                        break;
+                    case FOLLOWING:
+                        requestLocButton.setText("罗盘");
+                        mCurrentMode = MyLocationConfiguration.LocationMode.COMPASS;
+                        mBaiduMap
+                                .setMyLocationConfigeration(new MyLocationConfiguration(
+                                        mCurrentMode, true, null));
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+        requestLocButton.setOnClickListener(btnClickListener);
+    }
+
+    /**
+     * 初始化定位信息
+     */
+    private void initLocation() {
+        mLocClient = new LocationClient(this);
+        mLocClient.registerLocationListener(myListener);
+        LocationClientOption option = new LocationClientOption();
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);//可选，默认高精度，设置定位模式，高精度，低功耗，仅设备
+        option.setCoorType("bd09ll");//可选，默认gcj02，设置返回的定位结果坐标系
+        option.setOpenGps(true); // 打开gps
+        int span = 5000;
+        option.setScanSpan(span);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
+        option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
+        option.setOpenGps(true);//可选，默认false,设置是否使用gps
+        option.setLocationNotify(true);//可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
+        option.setIsNeedLocationDescribe(true);//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
+        option.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
+        option.setIgnoreKillProcess(false);//可选，默认false，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认杀死
+        option.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
+        option.setEnableSimulateGps(false);//可选，默认false，设置是否需要过滤gps仿真结果，默认需要
+        mLocClient.setLocOption(option);
+        // 开启定位图层
+        mBaiduMap.setMyLocationEnabled(true);
+        mBaiduMap.setMyLocationConfigeration(new MyLocationConfiguration(mCurrentMode, true,
+                null));//默认图标
+        mLocClient.start();
     }
 
     /**
@@ -443,6 +527,43 @@ public class RoutePlanActivity extends Activity implements BaiduMap.OnMapClickLi
 
         public void setOnItemInDlgClickLinster( OnItemInDlgClickListener itemListener) {
             onItemInDlgClickListener = itemListener;
+        }
+
+    }
+
+    /**
+     * 定位SDK监听函数
+     */
+    public class MyLocationListenner implements BDLocationListener {
+
+        @Override
+        public void onReceiveLocation(BDLocation location) {
+            // map view 销毁后不在处理新接收的位置
+            if (location == null || mapView == null) {
+                return;
+            }
+
+            MyLocationData.Builder locData = new MyLocationData.Builder();
+            //获取所在位置经纬度
+            mLongitude = location.getLongitude();
+            mLatitude = location.getLatitude();
+            locData.accuracy(location.getRadius());        // 设置精度
+            locData.direction(location.getDirection());    // 设置方向
+            locData.latitude(mLatitude);    // 设置纬度
+            locData.longitude(mLongitude);    // 设置经度
+
+            MyLocationData locationData = locData.build();
+            mBaiduMap.setMyLocationData(locationData);    // 把定位数据显示到地图上
+
+//            logInfo(location);
+            if (isFirstLoc) {
+                isFirstLoc = false;
+                LatLng ll = new LatLng(location.getLatitude(),
+                        location.getLongitude());
+                MapStatus.Builder builder = new MapStatus.Builder();
+                builder.target(ll).zoom(18.0f);
+                mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+            }
         }
 
     }

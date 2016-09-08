@@ -97,7 +97,6 @@ public class MapActivity extends FragmentActivity implements
     BaiduMap mBaiduMap;
 
     // UI相关
-    Button requestLocButton;
     boolean isFirstLoc = true; // 是否首次定位
 
     private SDKReceiver mReceiver;
@@ -211,7 +210,7 @@ public class MapActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         this.search = (Button) findViewById(R.id.button2);
-        requestLocButton = (Button) findViewById(R.id.button1);
+
         this.bmapView = (MapView) findViewById(R.id.bmapView);
         this.keyWorldsView = (AutoCompleteTextView) findViewById(R.id.searchkey);
         // 地图初始化
@@ -227,7 +226,6 @@ public class MapActivity extends FragmentActivity implements
         registSDKReceiver();
 
         mCurrentMode = LocationMode.NORMAL;
-        requestLocButton.setText("普通");
 
         //检查用户权限
         checkPermission();
@@ -320,37 +318,7 @@ public class MapActivity extends FragmentActivity implements
     private void initListener() {
 
 
-        //按钮点击事件
-        OnClickListener btnClickListener = new OnClickListener() {
-            public void onClick(View v) {
-                switch (mCurrentMode) {
-                    case NORMAL:
-                        requestLocButton.setText("跟随");
-                        mCurrentMode = LocationMode.FOLLOWING;
-                        mBaiduMap
-                                .setMyLocationConfigeration(new MyLocationConfiguration(
-                                        mCurrentMode, true, null));
-                        break;
-                    case COMPASS:
-                        requestLocButton.setText("普通");
-                        mCurrentMode = LocationMode.NORMAL;
-                        mBaiduMap
-                                .setMyLocationConfigeration(new MyLocationConfiguration(
-                                        mCurrentMode, true, null));
-                        break;
-                    case FOLLOWING:
-                        requestLocButton.setText("罗盘");
-                        mCurrentMode = LocationMode.COMPASS;
-                        mBaiduMap
-                                .setMyLocationConfigeration(new MyLocationConfiguration(
-                                        mCurrentMode, true, null));
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
-        requestLocButton.setOnClickListener(btnClickListener);
+
 
 
         mBaiduMap.setOnMapTouchListener(new BaiduMap.OnMapTouchListener() {

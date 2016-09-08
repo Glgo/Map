@@ -65,6 +65,17 @@
             android:layout_height="fill_parent"
             android:clickable="true"/>
 
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:text="普通"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="25dp"
+            android:textColor="#000"
+            android:layout_marginTop="10dip" />
+
 
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
