@@ -21,8 +21,7 @@
             android:layout_height="wrap_content"
             android:maxLines="2"
             android:layout_weight="1"
-            android:hint="搜地点"
-            android:text="餐厅" />
+            android:hint="搜地点" />
     </LinearLayout>
 <RelativeLayout
     android:layout_width="match_parent"
