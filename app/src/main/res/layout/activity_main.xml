@@ -7,29 +7,50 @@
     android:orientation="vertical"
     android:padding="15dp"
     tools:context="com.example.guo.map.activity.MainActivity">
-    <Button
-        android:id="@+id/bt_map"
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="定位功能"
-        android:onClick="startAct"/>
-    <Button
-        android:id="@+id/bt_geo"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <Button
+            android:id="@+id/bt_geo"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:onClick="startAct"
+            android:text="地理编码"/>
+
+        <Button
+            android:id="@+id/bt_map"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:onClick="startAct"
+            android:text="定位功能"/>
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="地理编码"
-        android:onClick="startAct"/>
-    <Button
-        android:id="@+id/bt_busLine"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="公交路线"
-        android:onClick="startAct"/>
-    <Button
-        android:id="@+id/bt_QR"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="二维码"
-        android:onClick="startAct"/>
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <Button
+            android:id="@+id/bt_busLine"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:onClick="startAct"
+            android:text="公交路线"/>
+
+        <Button
+            android:id="@+id/bt_QR"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:onClick="startAct"
+            android:text="二维码"/>
+    </LinearLayout>
+
 
 </LinearLayout>
